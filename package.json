@@ -1,0 +1,28 @@
+{
+  "name": "kpoetry_backend",
+  "version": "1.0.0",
+  "description": "This is the backend implemenattion of application KPoetry",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index",
+    "dev": "nodemon index"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kamverma/KPoetry_Backend.git"
+  },
+  "author": "Kamal Verma",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/kamverma/KPoetry_Backend/issues"
+  },
+  "homepage": "https://github.com/kamverma/KPoetry_Backend#readme",
+  "dependencies": {
+    "body-parser": "^1.19.0",
+    "express": "^4.17.1",
+    "mysql": "^2.18.1"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.6"
+  }
+}
