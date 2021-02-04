@@ -1,6 +1,7 @@
 const express = require('express');
-const db = require('../connection');
+const db = require('../config/connection');
 const router = express.Router();
+const passport = require('passport');
 
 // Create Database
 // router.get('/createDB', (req, res) => {
@@ -46,8 +47,8 @@ router.get('/createTable', (req, res) => {
 });
 
 // Get all workitems
-router.get('/workitems', (req, res) => {
-    const sql = `SELECT * FROM workitems;` 
+router.get('/workitems', passport.authenticate('jwt', { session: false }), (req, res) => {
+    const sql = `SELECT * FROM workitems WHERE user_id = ${req.user[0].id};` 
     db.query(sql, (err, result) => {
         if (err) throw err;
         res.status(200).json(result);
@@ -55,7 +56,7 @@ router.get('/workitems', (req, res) => {
 });
 
 // Add new workitem
-router.post('/workitems', (req, res) => {
+router.post('/workitems', passport.authenticate('jwt', { session: false }), (req, res) => {
     const sql = `INSERT INTO workitems SET?`;
     if(!req.body.body || !req.body.posted_by) {
         // Bad request
@@ -65,33 +66,43 @@ router.post('/workitems', (req, res) => {
             if (err) throw err;
             db.query(`SELECT * FROM workitems;`, (err, result) => {
                 if (err) throw err;
-                res.json(result);
+                res.status(200).json({success: true, message: "Workitem Submitted!", result});
             });
         });
     }
 });
 
 // Update existing workitem
-router.put('/workitems/:id', (req, res) => {
-    const updatedWorkitem = req.body;
-    const sql = `UPDATE workitems SET? WHERE id = ${req.params.id}`;
-    db.query(`SELECT id FROM workitems WHERE id = ${req.params.id}`, (err, result) => {
+router.put('/workitems/:id', passport.authenticate('jwt', { session: false }), (req, res) => {
+    const id = req.params.id;
+    var title;
+    var body;
+    db.query(`SELECT title FROM workitems WHERE id = ${id};`, (err, result) => {
+        if (err) throw err;
+        title = result[0].title;
+    });
+    db.query(`SELECT body FROM workitems WHERE id = ${id};`, (err, result) => {
+        if (err) throw err;
+        body = result[0].body;
+    });
+    const sql = `UPDATE workitems SET title=?, body=?, posted_on = CURRENT_TIMESTAMP WHERE id = ${id}`;
+    db.query(`SELECT id FROM workitems WHERE id = ${id}`, (err, result) => {
         if (err) throw err;
         // Check if workitem id exists 
         if(result.length > 0) {
-            // If exists update workitem
-            db.query(sql, updatedWorkitem, (err, result) => {
+            // If exists, update workitem
+            db.query(sql, [req.body.title ? req.body.title : title, req.body.body ? req.body.body : body], (err, result) => {
                 if (err) throw err;
-                res.status(200).json({ msg: "Workitem updated succesfully", result });
+                res.status(200).json({ success: true,  message: "Workitem updated succesfully", result });
             });
         } else {
-            res.status(400).json({ msg: `Bad Request! Workitem of id ${req.params.id} doesn't exist` });
+            res.status(400).json({ success: false, message: `Bad Request! Workitem of id ${id} doesn't exist` });
         }
     });
 });
 
 // Delete workitem
-router.delete('/workitems/:id', (req, res) => {
+router.delete('/workitems/:id', passport.authenticate('jwt', { session: false }), (req, res) => {
     const sql = `DELETE FROM workitems WHERE id = ${req.params.id}`;
     db.query(`SELECT id FROM workitems WHERE id = ${req.params.id}`, (err, result) => {
         if (err) throw err;
@@ -100,10 +111,10 @@ router.delete('/workitems/:id', (req, res) => {
             // If exists delete workitem
             db.query(sql, (err, result) => {
                 if (err) throw err;
-                res.status(200).json({ msg: "Workitem Deleted!", result });
+                res.status(200).json({ success: true, message: "Workitem Deleted!", result });
             });
         } else {
-            res.status(400).json({ msg: `Bad Request! Workitem of id ${req.params.id} doesn't exist` });
+            res.status(400).json({ success: true, message: `Bad Request! Workitem of id ${req.params.id} doesn't exist` });
         }
     });
 });

@@ -9,3 +9,4 @@ const db = mysql.createConnection({
 });
 
 module.exports = db;
+module.exports.secret = "mysecret";
